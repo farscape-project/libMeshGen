@@ -5,7 +5,13 @@ def get_basis(geom, order, dx, dy, dz):
     elem = symfem.create_element(geom, "Nedelec", order)
     basis = elem.get_basis_functions()
 
+    for e in range(len(elem.reference.edges)):
+        edge_dofs = elem.dof_plot_positions()[e*order : (e+1)*order]
+        edge_funs = elem.get_basis_functions()[e*order : (e+1)*order]
+        basis[e*order : (e+1)*order] = [f for _, f in sorted(zip(edge_dofs, edge_funs), key = lambda x: x[0])]
+
     if geom == "triangle":
+        basis[: order] = basis[order - 1 : : -1]
         basis[order : 2*order] = basis[2*order - 1 : order - 1 : -1]
         basis[order : 2*order] = [-f for f in basis[order : 2*order]]
         basis = basis[2*order : 3*order] + basis[: 2*order] + basis[3*order : ]
