@@ -1,4 +1,4 @@
-import symfem, sympy, sys
+import inflect, symfem, sympy, sys
 
 def get_basis(geom, order, dx, dy, dz):
 
@@ -50,26 +50,29 @@ dim = int(sys.argv[1])
 order = int(sys.argv[2])
 derivatives = int(sys.argv[3])
 
-print("{\n"
-      "  switch (elem->type())\n"
-      "    {")
+p = inflect.engine()
+
+print("case " + p.number_to_words(p.ordinal(order)).upper() + ":\n"
+      "  {\n"
+      "    switch (elem->type())\n"
+      "      {")
 
 for geom in ["quadrilateral", "triangle"]:
 
     if geom == "triangle":
-        print("    case TRI6:\n"
-              "    case TRI7:\n"
-              "      {")
+        print("      case TRI6:\n"
+              "      case TRI7:\n"
+              "        {")
     elif geom == "quadrilateral":
-        print("    case QUAD8:\n"
-              "    case QUAD9:\n"
-              "      {")
+        print("      case QUAD8:\n"
+              "      case QUAD9:\n"
+              "        {")
 
     elem = symfem.create_reference(geom)
 
     if derivatives:
-        print("        switch (j)\n"
-              "          {")
+        print("          switch (j)\n"
+              "            {")
 
     for d in range(derivatives + 1):
         dx = derivatives - d
@@ -79,35 +82,38 @@ for geom in ["quadrilateral", "triangle"]:
         spaces = 6 * " " if derivatives else ""
 
         if derivatives:
-            print(f"          case {d}:\n"
-                   "            {")
+            print(f"              // d" + f"^{derivatives}" * (derivatives > 1) + "()/" +
+                                    "dxi" * (dx > 0) + f"^{dx}" * (dx > 1) +
+                                    "deta" * (dy > 0) + f"^{dy}" * (dy > 1) + "\n"
+                  f"            case {d}:\n"
+                   "              {")
 
-        print(spaces + "        switch(ii)\n" +
-              spaces + "          {")
+        print(spaces + "          switch(ii)\n" +
+              spaces + "            {")
 
         for f in range(len(elem.edges) * order):
-            print(spaces + f"          case {f}:\n" +
-                  spaces + f"            return sign * RealGradient{basis[f]};")
+            print(spaces + f"            case {f}:\n" +
+                  spaces + f"              return sign * RealGradient{basis[f]};")
 
         for f in range(len(elem.edges) * order, len(basis)):
-            print(spaces + f"          case {f}:\n" +
-                  spaces + f"            return RealGradient{basis[f]};")
+            print(spaces + f"            case {f}:\n" +
+                  spaces + f"              return RealGradient{basis[f]};")
 
-        print(spaces + "          default:\n" +
-              spaces + "            libmesh_error_msg(\"Invalid i = \" << i);\n" +
-              spaces + "          }")
+        print(spaces + "            default:\n" +
+              spaces + "              libmesh_error_msg(\"Invalid i = \" << i);\n" +
+              spaces + "            }")
 
         if derivatives:
-            print("            }")
+            print(f"              }} // j = {d}")
 
     if derivatives:
-        print("          default:\n"
-              "            libmesh_error_msg(\"Invalid j = \" << j);\n"
-              "          }")
+        print("            default:\n"
+              "              libmesh_error_msg(\"Invalid j = \" << j);\n"
+              "            }")
 
-    print("      }")
+    print("        }")
 
-print( "    default:\n"
-      f"      libmesh_error_msg(\"ERROR: Unsupported {dim}D element type!: \" << Utility::enum_to_string(elem->type()));\n"
-       "    }\n"
-       "}")
+print( "      default:\n"
+      f"        libmesh_error_msg(\"ERROR: Unsupported {dim}D element type!: \" << Utility::enum_to_string(elem->type()));\n"
+       "      } // end switch (type)\n"
+       "  } // end case " + p.number_to_words(p.ordinal(order)).upper())
