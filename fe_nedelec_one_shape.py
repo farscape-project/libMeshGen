@@ -104,14 +104,14 @@ for geom in ["quadrilateral", "triangle"]:
               spaces + "            }")
 
         if derivatives:
-            print(f"              }} // j = {d}")
+            print(f"              }} // j = {d}\n")
 
     if derivatives:
         print("            default:\n"
               "              libmesh_error_msg(\"Invalid j = \" << j);\n"
               "            }")
 
-    print("        }")
+    print("        }\n")
 
 print( "      default:\n"
       f"        libmesh_error_msg(\"ERROR: Unsupported {dim}D element type!: \" << Utility::enum_to_string(elem->type()));\n"
