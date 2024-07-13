@@ -36,7 +36,7 @@ def get_basis(geom, order, dx, dy, dz):
     xi, eta, zeta = sympy.symbols('xi eta zeta')
     basis = [f.subs((x, y, z), (xi, eta, zeta)) for f in basis]
 
-    for o in range(2, order + 1):
+    for o in range(order, 1, -1):
         basis = [f.subs(xi**o, sympy.UnevaluatedExpr(sympy.sympify(('xi*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
         basis = [f.subs(eta**o, sympy.UnevaluatedExpr(sympy.sympify(('eta*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
         basis = [f.subs(zeta**o, sympy.UnevaluatedExpr(sympy.sympify(('zeta*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
