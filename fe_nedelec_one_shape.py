@@ -1,4 +1,4 @@
-import inflect, symfem, sympy, sys
+import inflect, re, symfem, sympy, sys
 
 def get_basis(geom, order, dx, dy, dz):
 
@@ -24,14 +24,12 @@ def get_basis(geom, order, dx, dy, dz):
 
     x, y, z = sympy.symbols('x y z')
     if geom == "quadrilateral":
-        basis = [f.subs((x, y, z), ((1 + x) * .5, (1 + y) * .5, (1 + z) * .5)) for f in basis]
-        basis = [f * sympy.sympify(.5) for f in basis]
+        basis = [f.subs((x, y, z), ((1 + x) / 2, (1 + y) / 2, (1 + z) / 2)) for f in basis]
+        basis = [f / sympy.sympify(2) for f in basis]
 
     basis = [f.diff((x, dx)) for f in basis]
     basis = [f.diff((y, dy)) for f in basis]
     basis = [f.diff((z, dz)) for f in basis]
-
-    basis = [f.with_floats() for f in basis]
 
     xi, eta, zeta = sympy.symbols('xi eta zeta')
     basis = [f.subs((x, y, z), (xi, eta, zeta)) for f in basis]
@@ -43,6 +41,12 @@ def get_basis(geom, order, dx, dy, dz):
         basis = [f.subs((xi + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(xi + 1)*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
         basis = [f.subs((eta + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(eta + 1)*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
         basis = [f.subs((zeta + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(zeta + 1)*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
+        basis = [f.subs(((xi + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(xi + 1)/2*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
+        basis = [f.subs(((eta + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(eta + 1)/2*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
+        basis = [f.subs(((zeta + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(zeta + 1)/2*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
+
+    p = re.compile(r'(\d+)')
+    basis = [p.sub(r'\1.', str(f)) for f in basis]
 
     return basis
 
