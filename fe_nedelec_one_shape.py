@@ -1,4 +1,4 @@
-import inflect, re, symfem, sympy, sys
+import inflect, itertools, re, symfem, sympy, sys
 
 def get_basis(geom, order, dx, dy, dz):
 
@@ -23,7 +23,7 @@ def get_basis(geom, order, dx, dy, dz):
         basis = basis[ : order] + basis[2*order : 4*order] + basis[order : 2*order] + basis[4*order : ]
 
     x, y, z = sympy.symbols('x y z')
-    if geom == "quadrilateral":
+    if geom == "quadrilateral" or geom == "hexahedron":
         basis = [f.subs((x, y, z), ((1 + x) / 2, (1 + y) / 2, (1 + z) / 2)) for f in basis]
         basis = [f / sympy.sympify(2) for f in basis]
 
@@ -61,7 +61,9 @@ print("case " + p.number_to_words(p.ordinal(order)).upper() + ":\n"
       "    switch (elem->type())\n"
       "      {")
 
-for geom in ["quadrilateral", "triangle"]:
+for geom in ["quadrilateral", "triangle"] if dim == 2 else \
+            ["hexahedron", "tetrahedron"] if dim == 3 else \
+            []:
 
     if geom == "triangle":
         print("      case TRI6:\n"
@@ -71,6 +73,14 @@ for geom in ["quadrilateral", "triangle"]:
         print("      case QUAD8:\n"
               "      case QUAD9:\n"
               "        {")
+    elif geom == "tetrahedron":
+        print("      case TET10:") if order < 2 else None
+        print("      case TET14:\n"
+              "        {")
+    elif geom == "hexahedron":
+        print("      case HEX20:") if order < 2 else None
+        print("      case HEX27:\n"
+              "        {")
 
     elem = symfem.create_reference(geom)
 
@@ -78,17 +88,27 @@ for geom in ["quadrilateral", "triangle"]:
         print("          switch (j)\n"
               "            {")
 
-    for d in range(derivatives + 1):
-        dx = derivatives - d
-        dy = d
+    combs = []
+    for d in itertools.combinations(range(derivatives + dim - 1), dim - 1):
+        combs.append([b - a - 1 for a, b in zip((-1,) + d, d + (derivatives + dim - 1,))])
+    combs = combs[::-1]
 
-        basis = get_basis(geom, order, dx, dy, 0)
+    if dim == 2:
+        for d in combs: d.append(0)
+    elif dim == 3 and derivatives == 2:
+        combs[2], combs[3] = combs[3], combs[2]
+
+    for d in range(len(combs)):
+        dx, dy, dz = combs[d]
+
+        basis = get_basis(geom, order, dx, dy, dz)
         spaces = 6 * " " if derivatives else ""
 
         if derivatives:
             print(f"              // d" + f"^{derivatives}" * (derivatives > 1) + "()/" +
                                     "dxi" * (dx > 0) + f"^{dx}" * (dx > 1) +
-                                    "deta" * (dy > 0) + f"^{dy}" * (dy > 1) + "\n"
+                                    "deta" * (dy > 0) + f"^{dy}" * (dy > 1) +
+                                    "dzeta" * (dz > 0) + f"^{dz}" * (dz > 1) + "\n"
                   f"            case {d}:\n"
                    "              {")
 
