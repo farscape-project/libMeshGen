@@ -21,6 +21,17 @@ def get_basis(geom, order, dx, dy, dz):
         basis[3*order : 4*order] = basis[4*order - 1 : 3*order - 1 : -1]
         basis[3*order : 4*order] = [-f for f in basis[3*order : 4*order]]
         basis = basis[ : order] + basis[2*order : 4*order] + basis[order : 2*order] + basis[4*order : ]
+    elif geom == "tetrahedron":
+        basis[ : order] = basis[order - 1 : : -1]
+        basis[order : 2*order] = basis[2*order - 1 : order - 1 : -1]
+        basis[2*order : 3*order] = basis[3*order - 1 : 2*order - 1 : -1]
+        basis = basis[5*order : 6*order] + basis[2*order : 3*order] + basis[4*order : 5*order] + basis[3*order : 4*order] + basis[order : 2*order] + basis[ : order] + basis[6*order : ]
+    elif geom == "hexahedron":
+        basis[5*order : 6*order] = basis[6*order - 1 : 5*order - 1 : -1]
+        basis[5*order : 6*order] = [-f for f in basis[5*order : 6*order]]
+        basis[11*order : 12*order] = basis[12*order - 1 : 11*order - 1 : -1]
+        basis[11*order : 12*order] = [-f for f in basis[11*order : 12*order]]
+        basis = basis[ : order] + basis[3*order : 4*order] + basis[5*order : 6*order] + basis[order : 3*order] + basis[4*order : 5*order] + basis[7*order : 8*order] + basis[6*order : 7*order] + basis[8*order : 9*order] + basis[10*order : 12*order] + basis[9*order : 10*order] + basis[12*order : ]
 
     x, y, z = sympy.symbols('x y z')
     if geom == "quadrilateral" or geom == "hexahedron":
