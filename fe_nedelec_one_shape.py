@@ -36,6 +36,14 @@ def get_basis(geom, order, dx, dy, dz):
     elif geom == "hexahedron":
         basis[se(5)] = [-f for f in basis[sre(5)]]
         basis[se(11)] = [-f for f in basis[sre(11)]]
+        basis[fo : vo] = [-basis[i] if i % 2 else basis[i] for i in range(fo, vo)]
+        if order == 2:
+            basis[sf(0)] = [basis[sf(0)][i] for i in (1, 3, 2, 0)]
+            basis[sf(1)] = [basis[sf(1)][i] for i in (0, 2, 3, 1)]
+            basis[sf(2)] = [basis[sf(2)][i] for i in (0, 1, 3, 2)]
+            basis[sf(3)] = [basis[sf(3)][i] for i in (0, 2, 3, 1)]
+            basis[sf(4)] = [basis[sf(4)][i] for i in (0, 1, 3, 2)]
+            basis[sf(5)] = [basis[sf(5)][i] for i in (0, 2, 3, 1)]
         basis = [b for e in (0, 3, 5, 1, 2, 4, 7, 6, 8, 10, 11, 9) for b in basis[se(e)]] +  [b for f in (0, 1, 3, 4, 2, 5) for b in basis[sf(f)]] + basis[vo : ]
 
     x, y, z = sympy.symbols('x y z')
