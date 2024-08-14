@@ -8,36 +8,35 @@ def get_basis(geom, order, dx, dy, dz):
     pe = order
     fo = pe * len(elem.reference.edges)
     pf = order*(order - 1) if geom == "tetrahedron" else 2*order*(order - 1) if geom == "hexahedron" else 0
+    vo = fo + pf * len(elem.reference.faces)
+
+    se  = lambda edge : slice(pe * edge, pe * (edge + 1))
+    sre = lambda edge : slice(pe * (edge + 1) - 1, pe * edge - 1 if edge > 0 else None, -1)
+    sf  = lambda face : slice(fo + pf * face, fo + pf * (face + 1))
+    srf = lambda face : slice(fo + pf * (face + 1) - 1, fo + pf * face - 1, -1)
 
     for e in range(len(elem.reference.edges)):
-        edge_dofs = elem.dof_plot_positions()[e*pe : (e+1)*pe]
-        edge_funs = elem.get_basis_functions()[e*pe : (e+1)*pe]
-        basis[e*pe : (e+1)*pe] = [f for _, f in sorted(zip(edge_dofs, edge_funs), key = lambda x: x[0])]
+        edge_dofs = elem.dof_plot_positions()[se(e)]
+        edge_funs = elem.get_basis_functions()[se(e)]
+        basis[se(e)] = [f for _, f in sorted(zip(edge_dofs, edge_funs), key = lambda x: x[0])]
 
     if geom == "triangle":
-        basis[: pe] = basis[pe - 1 : : -1]
-        basis[pe : 2*pe] = basis[2*pe - 1 : pe - 1 : -1]
-        basis[pe : 2*pe] = [-f for f in basis[pe : 2*pe]]
-        basis = basis[2*pe : 3*pe] + basis[: 2*pe] + basis[fo : ]
+        basis[se(0)] = basis[sre(0)]
+        basis[se(1)] = [-f for f in basis[sre(1)]]
+        basis = [b for e in (2, 0, 1) for b in basis[se(e)]] + basis[fo : ]
     elif geom == "quadrilateral":
-        basis[pe : 2*pe] = basis[2*pe - 1 : pe - 1 : -1]
-        basis[pe : 2*pe] = [-f for f in basis[pe : 2*pe]]
-        basis[3*pe : 4*pe] = basis[4*pe - 1 : 3*pe - 1 : -1]
-        basis[3*pe : 4*pe] = [-f for f in basis[3*pe : 4*pe]]
-        basis = basis[ : pe] + basis[2*pe : 4*pe] + basis[pe : 2*pe] + basis[fo : ]
+        basis[se(1)] = [-f for f in basis[sre(1)]]
+        basis[se(3)] = [-f for f in basis[sre(3)]]
+        basis = [b for e in (0, 2, 3, 1) for b in basis[se(e)]] + basis[fo : ]
     elif geom == "tetrahedron":
-        basis[ : pe] = basis[pe - 1 : : -1]
-        basis[pe : 2*pe] = basis[2*pe - 1 : pe - 1 : -1]
-        basis[2*pe : 3*pe] = basis[3*pe - 1 : 2*pe - 1 : -1]
-        basis = basis[5*pe : 6*pe] + basis[2*pe : 3*pe] + basis[4*pe : 5*pe] + basis[3*pe : 4*pe] + basis[pe : 2*pe] + basis[ : pe] + basis[fo : ]
-        basis = basis[: fo] + basis[fo + 3*pf : fo + 4*pf] + basis[fo + 2*pf : fo + 3*pf] + basis[fo : fo + 2*pf] + basis[fo + 4*pf : ]
+        basis[se(0)] = basis[sre(0)]
+        basis[se(1)] = basis[sre(1)]
+        basis[se(2)] = basis[sre(2)]
+        basis = [b for e in (5, 2, 4, 3, 1, 0) for b in basis[se(e)]] +  [b for f in (3, 2, 0, 1) for b in basis[sf(f)]] + basis[vo : ]
     elif geom == "hexahedron":
-        basis[5*pe : 6*pe] = basis[6*pe - 1 : 5*pe - 1 : -1]
-        basis[5*pe : 6*pe] = [-f for f in basis[5*pe : 6*pe]]
-        basis[11*pe : 12*pe] = basis[12*pe - 1 : 11*pe - 1 : -1]
-        basis[11*pe : 12*pe] = [-f for f in basis[11*pe : 12*pe]]
-        basis = basis[ : pe] + basis[3*pe : 4*pe] + basis[5*pe : 6*pe] + basis[pe : 3*pe] + basis[4*pe : 5*pe] + basis[7*pe : 8*pe] + basis[6*pe : 7*pe] + basis[8*pe : 9*pe] + basis[10*pe : 12*pe] + basis[9*pe : 10*pe] + basis[fo : ]
-        basis = basis[: fo + 2*pf] + basis[fo + 3*pf : fo + 5*pf] + basis[fo + 2*pf : fo + 3*pf] + basis[fo + 5*pf : ]
+        basis[se(5)] = [-f for f in basis[sre(5)]]
+        basis[se(11)] = [-f for f in basis[sre(11)]]
+        basis = [b for e in (0, 3, 5, 1, 2, 4, 7, 6, 8, 10, 11, 9) for b in basis[se(e)]] +  [b for f in (0, 1, 3, 4, 2, 5) for b in basis[sf(f)]] + basis[vo : ]
 
     x, y, z = sympy.symbols('x y z')
     if geom == "quadrilateral" or geom == "hexahedron":
