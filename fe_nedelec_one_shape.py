@@ -5,10 +5,10 @@ def get_basis(geom, order, dx, dy, dz):
     elem = symfem.create_element(geom, "Nedelec", order)
     basis = elem.get_basis_functions()
 
-    pe = order
-    fo = pe * len(elem.reference.edges)
-    pf = order*(order - 1) if geom == "tetrahedron" else 2*order*(order - 1) if geom == "hexahedron" else 0
-    vo = fo + pf * len(elem.reference.faces)
+    pe = len(elem.entity_dofs(1, 0))
+    fo = pe * len(elem.reference.sub_entities(1))
+    pf = len(elem.entity_dofs(2, 0))
+    vo = fo + pf * len(elem.reference.sub_entities(2))
 
     se  = lambda edge : slice(pe * edge, pe * (edge + 1))
     sre = lambda edge : slice(pe * (edge + 1) - 1, pe * edge - 1 if edge > 0 else None, -1)
