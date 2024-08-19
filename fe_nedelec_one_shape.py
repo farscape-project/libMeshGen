@@ -43,23 +43,16 @@ def get_basis(geom, order, dx, dy, dz):
         basis = [f.subs((x, y, z), ((1 + x) / 2, (1 + y) / 2, (1 + z) / 2)) for f in basis]
         basis = [f / sympy.sympify(2) for f in basis]
 
-    basis = [f.diff((x, dx)) for f in basis]
-    basis = [f.diff((y, dy)) for f in basis]
-    basis = [f.diff((z, dz)) for f in basis]
+    for v, d in ((x, dx), (y, dy), (z, dz)):
+        basis = [f.diff((v, d)) for f in basis]
 
     xi, eta, zeta = sympy.symbols('xi eta zeta')
     basis = [f.subs((x, y, z), (xi, eta, zeta)) for f in basis]
 
     for o in range(order, 1, -1):
-        basis = [f.subs(xi**o, sympy.UnevaluatedExpr(sympy.sympify(('xi*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
-        basis = [f.subs(eta**o, sympy.UnevaluatedExpr(sympy.sympify(('eta*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
-        basis = [f.subs(zeta**o, sympy.UnevaluatedExpr(sympy.sympify(('zeta*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
-        basis = [f.subs((xi + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(xi + 1)*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
-        basis = [f.subs((eta + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(eta + 1)*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
-        basis = [f.subs((zeta + 1)**o, sympy.UnevaluatedExpr(sympy.sympify(('(zeta + 1)*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
-        basis = [f.subs(((xi + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(xi + 1)/2*'*o)[:-1], locals={"xi": xi}, evaluate = False))) for f in basis]
-        basis = [f.subs(((eta + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(eta + 1)/2*'*o)[:-1], locals={"eta": eta}, evaluate = False))) for f in basis]
-        basis = [f.subs(((zeta + 1)/2)**o, sympy.UnevaluatedExpr(sympy.sympify(('(zeta + 1)/2*'*o)[:-1], locals={"zeta": zeta}, evaluate = False))) for f in basis]
+        for vsym, vstr in ((xi, 'xi'), (eta, 'eta'), (zeta, 'zeta')):
+            for esym, estr in ((vsym**o, (vstr+'*')*o), ((vsym + 1)**o, ('('+vstr+' + 1)*')*o), (((vsym + 1)/2)**o, ('('+vstr+' + 1)/2*')*o)):
+                basis = [f.subs(esym, sympy.UnevaluatedExpr(sympy.sympify((estr)[:-1], locals={vstr: vsym}, evaluate = False))) for f in basis]
 
     p = re.compile(r'(\d+)')
     basis = [p.sub(r'\1.', str(f)) for f in basis]
